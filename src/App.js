@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Play, Pause, Download, BarChart3, Thermometer, Zap, RotateCcw, Menu, X } from 'lucide-react';
+import { Play, Pause, Download, BarChart3, Thermometer, Zap, RotateCcw, Menu, X, LineChart, Video } from 'lucide-react';
 
+// ============================================================
+// STYLE DEFINITIONS
+// ============================================================
+// All visual styling for components is defined here
+// Modify these to change the appearance of the app
+// Developed by: Mr Mosala S.I
+// Research findings simulation 29-July-2025
 const styles = {
   container: {
     minHeight: '100vh',
@@ -104,7 +111,7 @@ const styles = {
     color: '#166534'
   },
   statusPaused: {
-    background: '#fecaca',
+    background: 'rgba(254, 202, 202, 1)',
     color: '#991b1b'
   },
   statusDot: {
@@ -432,53 +439,177 @@ const styles = {
   otherViewsResultNote: {
     fontSize: '12px',
     color: '#9ca3af'
+  },
+  graphContainer: {
+    background: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: '12px',
+    padding: '16px',
+    marginTop: '16px',
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+  },
+  graphTitle: {
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginBottom: '16px',
+    color: '#374151'
+  },
+  graphImage: {
+    width: '100%',
+    height: '300px',
+    background: '#f8fafc',
+    borderRadius: '8px',
+    objectFit: 'contain'
+  },
+  graphControls: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '12px',
+    alignItems: 'center'
+  },
+  graphSelect: {
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid #d1d5db',
+    background: 'white',
+    color: '#374151',
+    fontSize: '14px'
+  },
+  graphLegend: {
+    display: 'flex',
+    gap: '16px',
+    flexWrap: 'wrap'
+  },
+  graphLegendItem: {
+    display: 'flex',
+    alignItems: 'center',
+    fontSize: '12px',
+    color: '#374151'
+  },
+  graphLegendColor: {
+    width: '12px',
+    height: '12px',
+    borderRadius: '2px',
+    marginRight: '6px'
+  },
+  // New styles for video tab
+  videoContainer: {
+    width: '100%',
+    maxWidth: '800px',
+    margin: '0 auto',
+    padding: '20px'
+  },
+  videoPlayer: {
+    width: '100%',
+    aspectRatio: '16/9',
+    backgroundColor: '#000',
+    borderRadius: '12px',
+    marginBottom: '20px'
+  },
+  videoDescription: {
+    textAlign: 'center',
+    color: '#374151',
+    fontSize: '16px',
+    lineHeight: '1.5'
   }
 };
 
+// Parameter configuration
+const parameterConfig = {
+  gr: {
+    name: 'Grashof Number',
+    shortName: 'Gr',
+    min: 0.1,
+    max: 10.0,
+    step: 0.1,
+    unit: '',
+    description: 'Ratio of buoyancy to viscous forces',
+    values: [0.5, 2.0, 5.0, 10.0],
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  },
+  m: {
+    name: 'Hartmann Number',
+    shortName: 'M',
+    min: 0.1,
+    max: 5.0,
+    step: 0.1,
+    unit: '',
+    description: 'Ratio of electromagnetic to viscous forces',
+    values: [0.5, 1.0, 2.0, 4.0],
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  },
+  lambda: {
+    name: 'Non-Newtonian Parameter',
+    shortName: 'λ₃',
+    min: 0.01,
+    max: 0.5,
+    step: 0.01,
+    unit: '',
+    description: 'Controls shear-thinning/thickening behavior',
+    values: [0.05, 0.1, 0.2, 0.4],
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  },
+  a: {
+    name: 'Pressure Gradient',
+    shortName: 'A',
+    min: 0.1,
+    max: 5.0,
+    step: 0.1,
+    unit: '',
+    description: 'Driving force for fluid motion',
+    values: [0.5, 1.0, 2.0, 4.0],
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  },
+  beta: {
+    name: 'Porosity Parameter',
+    shortName: 'β₁',
+    min: 0.1,
+    max: 2.0,
+    step: 0.1,
+    unit: '',
+    description: 'Controls flow resistance in porous media',
+    values: [0.2, 0.5, 1.0, 1.5],
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  },
+  rd: {
+    name: 'Radiation Parameter',
+    shortName: 'Rd',
+    min: 0.1,
+    max: 3.0,
+    step: 0.1,
+    unit: '',
+    description: 'Controls thermal radiation effects',
+    values: [0.5, 1.0, 1.5, 2.5],
+    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+  }
+};
+
+// =============================================
+// MAIN COMPONENT
+// =============================================
 const MHDFluidFlowApp = () => {
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [currentView, setCurrentView] = useState('simulation');
-  const [particles, setParticles] = useState([]);
-  const [showMobileControls, setShowMobileControls] = useState(false);
-  const [windowWidth, setWindowWidth] = useState(1024);
+  // ===========================================
+  // STATE MANAGEMENT
+  // ===========================================
+  const [isPlaying, setIsPlaying] = useState(true); // Simulation play/pause state
+  const [currentView, setCurrentView] = useState('simulation'); // Current active view
+  const [particles, setParticles] = useState([]); // Particle data for animation
+  const [showMobileControls, setShowMobileControls] = useState(false); // Mobile controls visibility
+  const [windowWidth, setWindowWidth] = useState(1024); // Track window width for responsiveness
+  const [parameters, setParameters] = useState({
+    gr: 1.0, m: 1.0, lambda: 0.1, a: 1.0, beta: 0.5, rd: 0.5
+  }); // Simulation parameters
+  const [graphType, setGraphType] = useState('velocity'); // Graph type for visualization
+  const [graphParameter, setGraphParameter] = useState('gr'); // Parameter to visualize in graphs
+
+  // Animation frame reference
   const animationRef = useRef();
   const lastTimeRef = useRef(0);
 
-  // Parameters based on research data
-  const [parameters, setParameters] = useState({
-    gr: 1.0,      // Grashof Number (0.5 - 10.0)
-    m: 1.0,       // Hartmann Number (0.1 - 5.0)  
-    lambda: 0.1,  // Rabinowitsch (0.0 - 0.50)
-    a: 1.0,       // Pressure Gradient (0.5 - 2.0)
-    beta: 0.5,    // Porosity (0.0 - 1.0)
-    rd: 0.5       // Radiation (0.0 - 2.0)
-  });
-
-  const parameterConfig = {
-    gr: { name: 'Grashof (Gr)', shortName: 'Gr', min: 0.5, max: 10.0, step: 0.1, 
-          description: 'Buoyancy effects - ↑62% velocity, ↑35% temperature', unit: '' },
-    m: { name: 'Hartmann (M)', shortName: 'M', min: 0.1, max: 5.0, step: 0.1, 
-         description: 'Magnetic field - ↓73% velocity, ↑22% temperature', unit: '' },
-    lambda: { name: 'Rabinowitsch (λ₃)', shortName: 'λ₃', min: 0.0, max: 0.50, step: 0.01, 
-              description: 'Non-Newtonian - ↓41% velocity, ↑28% temperature', unit: '' },
-    a: { name: 'Pressure (A)', shortName: 'A', min: 0.5, max: 2.0, step: 0.1, 
-         description: 'Driving force - ↑velocity, ↓22% temperature', unit: '' },
-    beta: { name: 'Porosity (β₁)', shortName: 'β₁', min: 0.0, max: 1.0, step: 0.1, 
-            description: 'Porous medium - ↓58% velocity, ↑42% temperature', unit: '' },
-    rd: { name: 'Radiation (Rd)', shortName: 'Rd', min: 0.0, max: 2.0, step: 0.1, 
-          description: 'Heat transfer - ↑velocity, ↑temperature', unit: '' }
-  };
-
-  // Track window resize
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, []);
-
-  // Responsive settings
+  // ===========================================
+  // RESPONSIVE SETTINGS
+  // ===========================================
+  // Handles different screen sizes
+  // Adjust values to change mobile/desktop appearance
   const getResponsiveSettings = useCallback(() => {
     const isMobile = windowWidth < 768;
     return {
@@ -489,7 +620,13 @@ const MHDFluidFlowApp = () => {
     };
   }, [windowWidth]);
 
-  // Calculate velocity factor based on research findings
+  // ===========================================
+  // SIMULATION CALCULATIONS
+  // ===========================================
+  // Core physics calculations for the simulation
+  // Modify these to change how parameters affect the simulation
+
+  // Calculate velocity based on parameters
   const calculateVelocity = useCallback(() => {
     let velocity = 1.0;
     velocity *= (0.4 + parameters.gr * 0.06);
@@ -501,7 +638,7 @@ const MHDFluidFlowApp = () => {
     return Math.max(0.1, Math.min(3.0, velocity));
   }, [parameters]);
 
-  // Calculate temperature factor based on research findings  
+  // Calculate temperature based on parameters  
   const calculateTemperature = useCallback(() => {
     let temperature = 1.0;
     temperature *= (0.7 + parameters.gr * 0.035);
@@ -512,6 +649,22 @@ const MHDFluidFlowApp = () => {
     temperature *= (0.8 + parameters.rd * 0.2);
     return Math.max(0.2, Math.min(2.5, temperature));
   }, [parameters]);
+
+  // ===========================================
+  // PARTICLE SYSTEM
+  // ===========================================
+  // Handles particle creation and animation
+  // Modify to change particle behavior/appearance
+
+  // Track window resize
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      handleResize(); // Initialize width
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   // Initialize particles
   useEffect(() => {
@@ -602,6 +755,12 @@ const MHDFluidFlowApp = () => {
     };
   }, [isPlaying, calculateVelocity, calculateTemperature, getResponsiveSettings]);
 
+  // ===========================================
+  // HELPER FUNCTIONS
+  // ===========================================
+  // Various utility functions used in the component
+
+  // Get particle color based on temperature
   const getParticleColor = (particle, temperature) => {
     const tempFactor = Math.min(1, temperature * 0.5);
     const baseHue = particle.hue - (tempFactor * 40);
@@ -610,12 +769,14 @@ const MHDFluidFlowApp = () => {
     return `hsla(${baseHue}, ${saturation}%, ${lightness}%, ${particle.opacity})`;
   };
 
+  // Reset parameters to defaults
   const resetParameters = () => {
     setParameters({
       gr: 1.0, m: 1.0, lambda: 0.1, a: 1.0, beta: 0.5, rd: 0.5
     });
   };
 
+  // Generate and download report
   const downloadReport = () => {
     const velocity = calculateVelocity();
     const temperature = calculateTemperature();
@@ -654,6 +815,41 @@ const MHDFluidFlowApp = () => {
     URL.revokeObjectURL(url);
   };
 
+  // ===========================================
+  // IMAGE PATHS FOR GRAPHS
+  // ===========================================
+  // Replace these paths with your actual image paths
+  const graphImages = {
+    velocity: {
+      gr: '/images/velocity_gr.png',
+      m: '/images/velocity_m.png',
+      lambda: '/images/velocity_lambda.png',
+      a: '/images/velocity_a.png',
+      beta: '/images/velocity_beta.png',
+      rd: '/images/velocity_rd.png'
+    },
+    temperature: {
+      gr: '/images/temperature_gr.png',
+      m: '/images/temperature_m.png',
+      lambda: '/images/temperature_lambda.png',
+      a: '/images/temperature_a.png',
+      beta: '/images/temperature_beta.png',
+      rd: '/images/temperature_rd.png'
+    },
+    both: {
+      gr: '/images/both_gr.png',
+      m: '/images/both_m.png',
+      lambda: '/images/both_lambda.png',
+      a: '/images/both_a.png',
+      beta: '/images/both_beta.png',
+      rd: '/images/both_rd.png'
+    }
+  };
+
+  // ===========================================
+  // RENDER LOGIC
+  // ===========================================
+  // Calculate current values for rendering
   const velocity = calculateVelocity();
   const temperature = calculateTemperature();
   const settings = getResponsiveSettings();
@@ -661,7 +857,7 @@ const MHDFluidFlowApp = () => {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
+      {/* Header Section */}
       <div style={styles.header}>
         <div style={styles.headerTitle}>Advanced Fluid Mechanics & Heat Transfer</div>
         <div style={styles.headerSubtitle}>University of Limpopo - Mr Mosala S.I Research</div>
@@ -673,7 +869,9 @@ const MHDFluidFlowApp = () => {
               { id: 'simulation', icon: Play, label: 'Simulation' },
               { id: 'velocity', icon: BarChart3, label: 'Velocity' },
               { id: 'temperature', icon: Thermometer, label: 'Temperature' },
-              { id: 'combined', icon: Zap, label: 'Analysis' }
+              { id: 'combined', icon: Zap, label: 'Analysis' },
+              { id: 'graphs', icon: LineChart, label: 'Graphs' },
+              { id: 'video', icon: Video, label: 'Video' } // Added video tab
             ].map(tab => (
               <button
                 key={tab.id}
@@ -702,13 +900,14 @@ const MHDFluidFlowApp = () => {
         )}
       </div>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div style={{...styles.mainContent, flexDirection: isMobile ? 'column' : 'row'}}>
         
         {/* Simulation Area */}
         <div style={styles.simulationArea}>
           <div style={styles.simulationContainer}>
             
+            {/* Simulation View */}
             {currentView === 'simulation' && (
               <div style={styles.simulationContent}>
                 
@@ -839,8 +1038,8 @@ const MHDFluidFlowApp = () => {
               </div>
             )}
 
-            {/* Other Views */}
-            {currentView !== 'simulation' && (
+            {/* Other Views (Velocity, Temperature, Analysis) */}
+            {currentView !== 'simulation' && currentView !== 'graphs' && currentView !== 'video' && (
               <div style={styles.otherViews}>
                 <div style={styles.otherViewsContent}>
                   <div style={styles.otherViewsIcon}>
@@ -872,9 +1071,112 @@ const MHDFluidFlowApp = () => {
                 </div>
               </div>
             )}
+
+            {/* Graphs View */}
+            {currentView === 'graphs' && (
+              <div style={styles.otherViews}>
+                <div style={styles.otherViewsContent}>
+                  <div style={styles.otherViewsIcon}>
+                    <LineChart size={48} />
+                  </div>
+                  <div style={styles.otherViewsTitle}>Parameter Analysis</div>
+                  <div style={styles.otherViewsDescription}>
+                    Velocity and temperature profiles for different parameter values
+                  </div>
+
+                  {/* Graph Controls */}
+                  <div style={styles.graphControls}>
+                    <div>
+                      <label htmlFor="graphType" style={{marginRight: '8px', color: '#374151'}}>Graph Type: </label>
+                      <select
+                        id="graphType"
+                        value={graphType}
+                        onChange={(e) => setGraphType(e.target.value)}
+                        style={styles.graphSelect}
+                      >
+                        <option value="velocity">Velocity Profile</option>
+                        <option value="temperature">Temperature Profile</option>
+                        <option value="both">Both Profiles</option>
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label htmlFor="graphParameter" style={{marginRight: '8px', color: '#374151'}}>Parameter: </label>
+                      <select
+                        id="graphParameter"
+                        value={graphParameter}
+                        onChange={(e) => setGraphParameter(e.target.value)}
+                        style={styles.graphSelect}
+                      >
+                        <option value="gr">Grashof Number (Gr)</option>
+                        <option value="m">Hartmann Number (M)</option>
+                        <option value="lambda">Non-Newtonian Parameter (λ₃)</option>
+                        <option value="a">Pressure Gradient (A)</option>
+                        <option value="beta">Porosity Parameter (β₁)</option>
+                        <option value="rd">Radiation Parameter (Rd)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Graph Image */}
+                  <div style={styles.graphContainer}>
+                    <div style={styles.graphTitle}>
+                      {graphType === 'velocity' && `Velocity Profile u(y) for Different ${parameterConfig[graphParameter].name} Values`}
+                      {graphType === 'temperature' && `Temperature Profile θ(y) for Different ${parameterConfig[graphParameter].name} Values`}
+                      {graphType === 'both' && `Velocity and Temperature Profiles for Different ${parameterConfig[graphParameter].name} Values`}
+                    </div>
+                    <img 
+                      src={graphImages[graphType][graphParameter]} 
+                      alt={`${graphType} profile for ${parameterConfig[graphParameter].name}`}
+                      style={styles.graphImage}
+                    />
+                    <div style={styles.graphLegend}>
+                      {parameterConfig[graphParameter].values.map((value, index) => (
+                        <div key={value} style={styles.graphLegendItem}>
+                          <div style={{...styles.graphLegendColor, backgroundColor: parameterConfig[graphParameter].colors[index]}}></div>
+                          <span>{parameterConfig[graphParameter].shortName} = {value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Video View */}
+            {currentView === 'video' && (
+              <div style={styles.otherViews}>
+                <div style={styles.videoContainer}>
+                  <div style={styles.otherViewsIcon}>
+                    <Video size={48} />
+                  </div>
+                  <div style={styles.otherViewsTitle}>Fluid Behavior Video</div>
+                  <div style={styles.otherViewsDescription}>
+                    Watch real fluid behavior demonstrations related to MHD flow
+                  </div>
+                  
+                  {/* Video Player */}
+                  <div style={styles.videoPlayer}>
+                    {/* Replace with your actual video source */}
+                    <video 
+                      controls 
+                      style={{width: '100%', height: '100%', borderRadius: '12px'}}
+                      poster="/images/video-poster.jpg" // Add a poster image if needed
+                    >
+                      <source src={`${process.env.PUBLIC_URL}/videos/fluid_behavior.mp4`} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                  
+                  <div style={styles.videoDescription}>
+                    This video demonstrates the behavior of a non newtonian fluid. Now picture trying to model this fluid.
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
-
+        
         {/* Control Panel */}
         {(!isMobile || showMobileControls) && (
           <div style={{
