@@ -7,7 +7,7 @@ import { Play, Pause, Download, BarChart3, Thermometer, Zap, RotateCcw, Menu, X,
 // All visual styling for components is defined here
 // Modify these to change the appearance of the app
 // Developed by: Mr Mosala S.I
-// Research findings simulation 29-July-2025
+// Research findings simulation 21-August-2025
 const styles = {
   container: {
     minHeight: '100vh',
@@ -451,26 +451,39 @@ const styles = {
     borderRadius: '12px',
     padding: '16px',
     marginTop: '16px',
-    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    maxWidth: '100%',
+    overflowX: 'auto'
   },
   graphTitle: {
     textAlign: 'center',
     fontWeight: 'bold',
     marginBottom: '16px',
-    color: '#374151'
+    color: '#374151',
+    fontSize: '16px'
   },
   graphImage: {
     width: '100%',
-    height: '300px',
+    minWidth: '300px',
+    height: 'auto',
+    minHeight: '200px',
+    maxHeight: '300px',
     background: '#f8fafc',
     borderRadius: '8px',
     objectFit: 'contain'
   },
   graphControls: {
     display: 'flex',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
+    gap: '12px',
     marginTop: '12px',
-    alignItems: 'center'
+    alignItems: 'stretch'
+  },
+  graphControlRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px'
   },
   graphSelect: {
     padding: '8px 12px',
@@ -478,12 +491,15 @@ const styles = {
     border: '1px solid #d1d5db',
     background: 'white',
     color: '#374151',
-    fontSize: '14px'
+    fontSize: '14px',
+    width: '100%'
   },
   graphLegend: {
     display: 'flex',
-    gap: '16px',
-    flexWrap: 'wrap'
+    flexWrap: 'wrap',
+    gap: '12px',
+    justifyContent: 'center',
+    marginTop: '12px'
   },
   graphLegendItem: {
     display: 'flex',
@@ -866,9 +882,11 @@ const MHDFluidFlowApp = () => {
     <div style={styles.container}>
       {/* Header Section */}
       <div style={styles.header}>
-        <div style={styles.headerTitle}>Advanced Fluid Mechanics & Heat Transfer</div>
-        <div style={styles.headerSubtitle}>University of Limpopo - Mr Mosala S.I Research</div>
-        
+        <div style={styles.headerTitle}> Numerical Flow Analysis of MHD
+                             Rabinowitsch Fluid Flow Through
+                               a Vertical Microchannel</div>
+        <div style={styles.headerSubtitle}>University of Limpopo: Research findings</div>
+        <div style={styles.headerSubtitle}>Prepared by: Mr Mosala S.I</div>
         {/* Navigation - Desktop */}
         {!isMobile && (
           <div style={styles.navigation}>
@@ -1131,8 +1149,8 @@ const MHDFluidFlowApp = () => {
 
                   {/* Graph Controls */}
                   <div style={styles.graphControls}>
-                    <div>
-                      <label htmlFor="graphType" style={{marginRight: '8px', color: '#374151'}}>Graph Type: </label>
+                    <div style={styles.graphControlRow}>
+                      <label htmlFor="graphType" style={{color: '#374151', fontWeight: '500'}}>Graph Type</label>
                       <select
                         id="graphType"
                         value={graphType}
@@ -1145,8 +1163,8 @@ const MHDFluidFlowApp = () => {
                       </select>
                     </div>
                     
-                    <div>
-                      <label htmlFor="graphParameter" style={{marginRight: '8px', color: '#374151'}}>Parameter: </label>
+                    <div style={styles.graphControlRow}>
+                      <label htmlFor="graphParameter" style={{color: '#374151', fontWeight: '500'}}>Parameter</label>
                       <select
                         id="graphParameter"
                         value={graphParameter}
