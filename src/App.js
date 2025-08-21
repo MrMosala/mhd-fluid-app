@@ -39,6 +39,12 @@ const styles = {
     gap: '8px',
     flexWrap: 'wrap'
   },
+  mobileNavigation: {
+    display: 'flex',
+    flexDirection: 'column',
+    marginTop: '16px',
+    gap: '8px'
+  },
   navButton: {
     display: 'flex',
     alignItems: 'center',
@@ -594,6 +600,7 @@ const MHDFluidFlowApp = () => {
   const [currentView, setCurrentView] = useState('simulation'); // Current active view
   const [particles, setParticles] = useState([]); // Particle data for animation
   const [showMobileControls, setShowMobileControls] = useState(false); // Mobile controls visibility
+  const [showMobileTabs, setShowMobileTabs] = useState(false); // Mobile tabs visibility
   const [windowWidth, setWindowWidth] = useState(1024); // Track window width for responsiveness
   const [parameters, setParameters] = useState({
     gr: 1.0, m: 1.0, lambda: 0.1, a: 1.0, beta: 0.5, rd: 0.5
@@ -890,13 +897,51 @@ const MHDFluidFlowApp = () => {
 
         {/* Mobile Menu Button */}
         {isMobile && (
-          <button
-            onClick={() => setShowMobileControls(!showMobileControls)}
-            style={styles.mobileMenuButton}
-          >
-            {showMobileControls ? <X size={16} /> : <Menu size={16} />}
-            <span>Controls</span>
-          </button>
+          <>
+            <button
+              onClick={() => setShowMobileTabs(!showMobileTabs)}
+              style={styles.mobileMenuButton}
+            >
+              {showMobileTabs ? <X size={16} /> : <Menu size={16} />}
+              <span>View Tabs</span>
+            </button>
+            
+            {showMobileTabs && (
+              <div style={styles.mobileNavigation}>
+                {[
+                  { id: 'simulation', icon: Play, label: 'Simulation' },
+                  { id: 'velocity', icon: BarChart3, label: 'Velocity' },
+                  { id: 'temperature', icon: Thermometer, label: 'Temperature' },
+                  { id: 'combined', icon: Zap, label: 'Analysis' },
+                  { id: 'graphs', icon: LineChart, label: 'Graphs' },
+                  { id: 'video', icon: Video, label: 'Video' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setCurrentView(tab.id);
+                      setShowMobileTabs(false);
+                    }}
+                    style={{
+                      ...styles.navButton,
+                      ...(currentView === tab.id ? styles.navButtonActive : styles.navButtonInactive)
+                    }}
+                  >
+                    <tab.icon size={16} />
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <button
+              onClick={() => setShowMobileControls(!showMobileControls)}
+              style={styles.mobileMenuButton}
+            >
+              {showMobileControls ? <X size={16} /> : <Menu size={16} />}
+              <span>Controls</span>
+            </button>
+          </>
         )}
       </div>
 
